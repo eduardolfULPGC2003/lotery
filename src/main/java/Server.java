@@ -29,10 +29,11 @@ public class Server {
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    if (LocalDateTime.now().getMinute()==37) {
+                    if (LocalDateTime.now().getMinute()==11) {
                         System.out.println("Ahora");
+                        String now = LocalDateTime.now().withMinute(30).toString();
                         try {
-                            System.out.println(lottery());
+                            System.out.println(lottery(now));
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         } catch (CsvValidationException e) {
@@ -45,8 +46,13 @@ public class Server {
             while (true) {
                 DatagramPacket req = new DatagramPacket(buffer, buffer.length);
                 aSocket.receive(req);
-                String participation = new String(req.getData(), 0, req.getLength());
-                String response = accept(participation);
+                String request = new String(req.getData(), 0, req.getLength());
+                String response = null;
+                if (request.equals("historic")){
+                    response = getHistoric();
+                } else {
+                    response = accept(request);
+                }
                 buffer = response.getBytes();
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length,
                         req.getAddress(), req.getPort());
@@ -56,6 +62,27 @@ public class Server {
         } catch (IOException ioe) {
             System.out.println(ioe.getMessage());
         } finally {
+        }
+    }
+
+    private String getHistoric() {
+        List<String> winners = new ArrayList<>();
+        String path_win = this.path+"/winners.csv";
+        try {
+            CSVReader reader = new CSVReader(new FileReader(path_win));
+            String[] wins;
+            while ((wins = reader.readNext()) != null) {
+                for (String win : wins) {
+                    if (win.length() > 1) winners.add(win);
+                }
+            }
+            return winners.toString();
+        } catch (FileNotFoundException ie){
+            return "No participants";
+        } catch (CsvValidationException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -88,13 +115,12 @@ public class Server {
         return "Thank you for participating: " + req;
     }
 
-    private String lottery() throws IOException, CsvValidationException {
+    private String lottery(String now) throws IOException, CsvValidationException {
         List<String> winners = new ArrayList<>();
         Integer winner_num = new Random().nextInt(256);
-        String now = LocalDateTime.now().withMinute(30).toString();
-        String path_win = this.path+"/" + now.replace(":","-").substring(0,16) + ".csv";
+        String path_participants = this.path+"/" + now.replace(":","-").substring(0,16) + ".csv";
         try {
-            CSVReader reader = new CSVReader(new FileReader(path_win));
+            CSVReader reader = new CSVReader(new FileReader(path_participants));
             String[] shares;
             while ((shares = reader.readNext()) != null) {
                 for (String share : shares) {
@@ -106,6 +132,9 @@ public class Server {
                     }
                 }
             }
+            reader.close();
+            new File(path_participants).delete();
+            System.out.println(path_participants);
             if (winners.size() == 0) return "Number: " + winner_num + ". No winners";
             else {
                 int ppw = pool / winners.size();

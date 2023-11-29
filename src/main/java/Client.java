@@ -17,22 +17,20 @@ public class Client {
         this.email = email;
     }
 
-    private void play() throws ParseException {
+    private String play() throws ParseException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Lets play!");
         LocalDateTime dateTime = getDate();
         System.out.println("Please introduce a number between 0-255: ");
         int number = scanner.nextInt();
          if (dateTime.isBefore(LocalDateTime.now())) {
-             System.out.println("Wrong Date");
-             System.out.println("----------------------------------------------");
+             return "Wrong Date";
         } else if (number > 255 | number < 0) {
-             System.out.println("Wrong Number. Must be between 0 and 255");
-             System.out.println("----------------------------------------------");
+             return "Wrong Number. Must be between 0 and 255";
         } else {
              String message = this.email + "|" + dateTime.toString() + "|" + number;
              String reply = request(message);
-             System.out.println(reply);
+             return reply;
         }
     }
 
@@ -76,6 +74,11 @@ public class Client {
         return null;
     }
 
+    private String retrieve_historic() {
+        String reply = request("historic");
+        return reply;
+    }
+
     public static void main(String args[]) throws ParseException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Welcome to Lottery365. Bet whenever you want");
@@ -94,10 +97,10 @@ public class Client {
             int number = scanner.nextInt();
             switch (number){
                 case 1:
-                    client.play();
+                    System.out.println(client.play());
                     break;
                 case 2:
-                    //TODO
+                    System.out.println(client.retrieve_historic());
                     break;
                 case 3:
                     System.out.println("Good bye!");
