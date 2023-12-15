@@ -29,8 +29,7 @@ public class Server {
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    if (LocalDateTime.now().getMinute()==11) {
-                        System.out.println("Ahora");
+                    if (LocalDateTime.now().getMinute()==30) {
                         String now = LocalDateTime.now().withMinute(30).toString();
                         try {
                             System.out.println(lottery(now));
